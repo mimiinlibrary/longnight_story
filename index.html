@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>노든의 기억 조각 찾기 — 긴긴밤 어드벤처</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Nanum+Gothic:wght@400;700&display=swap');
+
+:root {
+  --night: #0d1117;
+  --deep: #161b27;
+  --card: #1e2535;
+  --border: #2e3a50;
+  --accent: #c8a96e;
+  --accent2: #7eb8c9;
+  --text: #e8dfc8;
+  --muted: #8a9ab5;
+  --bad: #7a3030;
+  --good: #2a5a4a;
+  --bad-text: #e8a0a0;
+  --good-text: #90d4b8;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--night);
+  color: var(--text);
+  font-family: 'Nanum Myeongjo', serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* 별 배경 */
+.stars {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(1px 1px at 10% 15%, rgba(200,169,110,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 25% 40%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 8%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 30%, rgba(200,169,110,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 12%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 85% 25%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 92% 60%, rgba(200,169,110,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 70%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 33% 85%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 60% 75%, rgba(200,169,110,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 78% 88%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 5% 50%, rgba(255,255,255,0.3) 0%, transparent 100%);
+}
+
+/* ── 화면 공통 ── */
+.screen {
+  position: relative; z-index: 1;
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 2rem 1rem;
+}
+.screen.hidden { display: none; }
+
+/* ── 타이틀 ── */
+#screen-title {
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 40%, #1a2540 0%, var(--night) 70%);
+}
+.title-art { margin-bottom: 2rem; }
+.title-main {
+  font-size: clamp(2.2rem, 6vw, 3.8rem);
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  text-shadow: 0 0 60px rgba(200,169,110,0.3);
+}
+.title-sub {
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  color: var(--accent2);
+  margin-top: 0.5rem;
+  letter-spacing: 0.15em;
+  font-weight: 400;
+}
+.title-desc {
+  max-width: 480px;
+  margin: 2rem auto;
+  font-size: 1rem;
+  color: var(--muted);
+  line-height: 1.9;
+  font-family: 'Nanum Gothic', sans-serif;
+}
+.btn-start {
+  background: transparent;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 1.1rem;
+  padding: 0.9rem 3rem;
+  cursor: pointer;
+  letter-spacing: 0.1em;
+  transition: all 0.3s;
+  margin-top: 1rem;
+}
+.btn-start:hover {
+  background: var(--accent);
+  color: var(--night);
+}
+
+/* ── 챕터 화면 ── */
+#screen-chapter {
+  justify-content: flex-start;
+  padding-top: 1.5rem;
+}
+.chapter-inner {
+  width: 100%; max-width: 720px;
+  display: flex; flex-direction: column;
+  gap: 0;
+}
+
+/* 진행 바 */
+.progress-bar {
+  display: flex; gap: 4px;
+  margin-bottom: 1.5rem;
+  padding: 0 0.5rem;
+}
+.progress-dot {
+  flex: 1; height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  transition: background 0.4s;
+}
+.progress-dot.done { background: var(--accent); }
+.progress-dot.current { background: var(--accent2); }
+
+/* 챕터 헤더 */
+.chapter-header {
+  display: flex; align-items: center; gap: 1rem;
+  margin-bottom: 1.2rem;
+  padding: 0 0.5rem;
+}
+.chapter-num {
+  font-size: 0.78rem;
+  color: var(--accent2);
+  letter-spacing: 0.2em;
+  font-family: 'Nanum Gothic', sans-serif;
+  white-space: nowrap;
+}
+.chapter-pov {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-family: 'Nanum Gothic', sans-serif;
+  border: 1px solid var(--border);
+  padding: 2px 10px;
+  border-radius: 20px;
+}
+
+/* 이미지 */
+.chapter-image {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1.4rem;
+  border: 1px solid var(--border);
+}
+.chapter-image svg { display: block; width: 100%; height: auto; }
+
+/* 텍스트 영역 */
+.chapter-title {
+  font-size: clamp(1.4rem, 3.5vw, 2rem);
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.4rem;
+  padding: 0 0.5rem;
+}
+.chapter-quote {
+  font-size: 0.95rem;
+  color: var(--accent);
+  font-style: italic;
+  margin-bottom: 1.4rem;
+  padding: 0 0.5rem;
+  line-height: 1.7;
+}
+.chapter-text {
+  font-size: 1rem;
+  line-height: 2;
+  color: var(--text);
+  padding: 0 0.5rem;
+  margin-bottom: 1.8rem;
+  font-family: 'Nanum Gothic', sans-serif;
+}
+.chapter-text .dialogue {
+  color: var(--accent2);
+  font-style: italic;
+}
+
+/* 선택지 */
+.choices-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  margin-bottom: 0.8rem;
+  padding: 0 0.5rem;
+  font-family: 'Nanum Gothic', sans-serif;
+}
+.choices { display: flex; flex-direction: column; gap: 0.7rem; padding: 0 0.5rem 2rem; }
+.choice-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem 1.2rem;
+  text-align: left;
+  cursor: pointer;
+  font-family: 'Nanum Gothic', sans-serif;
+  font-size: 0.97rem;
+  color: var(--text);
+  line-height: 1.7;
+  transition: all 0.25s;
+  display: flex; gap: 0.8rem; align-items: flex-start;
+}
+.choice-btn:hover { border-color: var(--accent2); background: #253045; transform: translateX(4px); }
+.choice-key {
+  color: var(--accent);
+  font-weight: 700;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  margin-top: 2px;
+}
+
+/* 서사 챕터 (선택지 없음) */
+.btn-next {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 1rem;
+  padding: 0.75rem 2.5rem;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  transition: all 0.3s;
+  margin: 0 0.5rem 2rem;
+  align-self: flex-start;
+}
+.btn-next:hover { background: var(--accent); color: var(--night); }
+
+/* ── 엔딩 화면 ── */
+#screen-ending { text-align: center; }
+.ending-badge {
+  font-size: 0.8rem;
+  letter-spacing: 0.25em;
+  padding: 4px 16px;
+  border-radius: 20px;
+  margin-bottom: 1.5rem;
+  font-family: 'Nanum Gothic', sans-serif;
+}
+.ending-badge.bad { background: var(--bad); color: var(--bad-text); }
+.ending-badge.good { background: var(--good); color: var(--good-text); }
+.ending-title {
+  font-size: clamp(1.6rem, 5vw, 2.6rem);
+  font-weight: 800;
+  margin-bottom: 1rem;
+  line-height: 1.3;
+}
+.ending-title.bad { color: var(--bad-text); }
+.ending-title.good { color: var(--good-text); }
+.ending-image {
+  max-width: 560px; width: 100%;
+  border-radius: 8px; overflow: hidden;
+  margin: 1.5rem auto;
+  border: 1px solid var(--border);
+}
+.ending-image svg { display: block; width: 100%; height: auto; }
+.ending-text {
+  max-width: 520px;
+  margin: 0 auto 2rem;
+  font-size: 1.05rem;
+  line-height: 2;
+  color: var(--text);
+  font-style: italic;
+  white-space: pre-line;
+}
+.ending-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.btn-retry, .btn-home {
+  padding: 0.75rem 2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+  transition: all 0.25s;
+}
+.btn-retry { background: var(--accent); color: var(--night); border: none; }
+.btn-retry:hover { opacity: 0.85; }
+.btn-home { background: transparent; border: 1px solid var(--muted); color: var(--muted); }
+.btn-home:hover { border-color: var(--text); color: var(--text); }
+
+/* 페이드 */
+.fade-in { animation: fadeIn 0.6s ease; }
+@keyframes fadeIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+<div class="stars"></div>
+
+<!-- ══════════ 타이틀 화면 ══════════ -->
+<div id="screen-title" class="screen fade-in">
+  <div class="title-art">
+    <svg viewBox="0 0 400 200" width="320" xmlns="http://www.w3.org/2000/svg">
+      <!-- 밤하늘 배경 -->
+      <rect width="400" height="200" fill="#0d1117"/>
+      <!-- 달 -->
+      <circle cx="320" cy="50" r="38" fill="#c8a96e" opacity="0.18"/>
+      <circle cx="330" cy="44" r="34" fill="#0d1117"/>
+      <circle cx="320" cy="50" r="38" fill="#c8a96e" opacity="0.12"/>
+      <!-- 별 -->
+      <circle cx="40" cy="20" r="1.5" fill="#fff" opacity="0.7"/>
+      <circle cx="90" cy="35" r="1" fill="#c8a96e" opacity="0.8"/>
+      <circle cx="160" cy="15" r="1.5" fill="#fff" opacity="0.6"/>
+      <circle cx="240" cy="28" r="1" fill="#fff" opacity="0.7"/>
+      <circle cx="280" cy="12" r="1.5" fill="#c8a96e" opacity="0.9"/>
+      <circle cx="370" cy="30" r="1" fill="#fff" opacity="0.5"/>
+      <circle cx="60" cy="60" r="1" fill="#fff" opacity="0.4"/>
+      <circle cx="200" cy="50" r="1" fill="#fff" opacity="0.5"/>
+      <!-- 지평선 풀 -->
+      <ellipse cx="200" cy="195" rx="240" ry="40" fill="#1a2a1a" opacity="0.8"/>
+      <ellipse cx="200" cy="195" rx="200" ry="35" fill="#162316"/>
+      <!-- 코뿔소 실루엣 -->
+      <g opacity="0.85">
+        <ellipse cx="130" cy="160" rx="55" ry="28" fill="#1e2535"/>
+        <ellipse cx="170" cy="148" rx="30" ry="22" fill="#1e2535"/>
+        <rect x="85" y="170" width="12" height="22" rx="4" fill="#1e2535"/>
+        <rect x="103" y="172" width="12" height="20" rx="4" fill="#1e2535"/>
+        <rect x="140" y="172" width="12" height="20" rx="4" fill="#1e2535"/>
+        <rect x="158" y="170" width="12" height="22" rx="4" fill="#1e2535"/>
+        <ellipse cx="192" cy="148" rx="14" ry="12" fill="#1e2535"/>
+        <path d="M200 140 Q210 128 206 120 Q202 128 196 132" fill="#2e3a50"/>
+        <circle cx="188" cy="143" r="2.5" fill="#c8a96e" opacity="0.8"/>
+        <path d="M175 155 Q185 152 192 155" stroke="#2e3a50" stroke-width="1.5" fill="none"/>
+      </g>
+      <!-- 펭귄 실루엣 -->
+      <g opacity="0.85">
+        <ellipse cx="230" cy="167" rx="11" ry="15" fill="#1e2535"/>
+        <ellipse cx="230" cy="157" rx="8" ry="9" fill="#1e2535"/>
+        <ellipse cx="230" cy="158" rx="5" ry="6" fill="#2a3545"/>
+        <circle cx="228" cy="154" r="1.5" fill="#c8a96e" opacity="0.9"/>
+        <path d="M220 162 Q215 165 218 168" stroke="#2e3a50" stroke-width="2" fill="none"/>
+        <path d="M240 162 Q245 165 242 168" stroke="#2e3a50" stroke-width="2" fill="none"/>
+        <path d="M225 174 L228 180 M233 174 L231 180" stroke="#2e3a50" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </g>
+      <!-- 반짝이는 별 강조 -->
+      <g opacity="0.9">
+        <line x1="320" y1="10" x2="320" y2="18" stroke="#c8a96e" stroke-width="1"/>
+        <line x1="316" y1="14" x2="324" y2="14" stroke="#c8a96e" stroke-width="1"/>
+      </g>
+    </svg>
+  </div>
+  <h1 class="title-main">노든의 기억 조각 찾기</h1>
+  <p class="title-sub">긴긴밤 어드벤처</p>
+  <p class="title-desc">
+    지구 마지막 흰바위코뿔소 노든과<br>외눈 펭귄 치쿠의 긴긴밤 여정.<br>
+    당신의 선택이 이야기의 끝을 만듭니다.
+  </p>
+  <button class="btn-start" onclick="startGame()">여정을 시작하다</button>
+</div>
+
+<!-- ══════════ 챕터 화면 ══════════ -->
+<div id="screen-chapter" class="screen hidden">
+  <div class="chapter-inner" id="chapter-inner"></div>
+</div>
+
+<!-- ══════════ 엔딩 화면 ══════════ -->
+<div id="screen-ending" class="screen hidden">
+  <div id="ending-inner"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// SVG 일러스트 (챕터별 1장씩, 수채화 동화풍)
+// ══════════════════════════════════════
+const IMAGES = {
+
+ch1: `<svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="sky1" cx="50%" cy="0%" r="100%">
+      <stop offset="0%" stop-color="#1a1030"/>
+      <stop offset="100%" stop-color="#0d1117"/>
+    </radialGradient>
+    <filter id="blur1"><feGaussianBlur stdDeviation="3"/></filter>
+  </defs>
+  <rect width="700" height="320" fill="url(#sky1)"/>
+  <!-- 달빛 -->
+  <circle cx="580" cy="60" r="55" fill="#c8a96e" opacity="0.08" filter="url(#blur1)"/>
+  <circle cx="580" cy="60" r="36" fill="#c8a96e" opacity="0.15"/>
+  <circle cx="592" cy="52" r="32" fill="#1a1030" opacity="0.9"/>
+  <!-- 별들 -->
+  <circle cx="80" cy="30" r="1.5" fill="#fff" opacity="0.7"/>
+  <circle cx="200" cy="20" r="1" fill="#c8a96e" opacity="0.8"/>
+  <circle cx="350" cy="35" r="1.5" fill="#fff" opacity="0.5"/>
+  <circle cx="450" cy="15" r="1" fill="#fff" opacity="0.9"/>
+  <circle cx="150" cy="55" r="1" fill="#fff" opacity="0.4"/>
+  <circle cx="300" cy="50" r="1" fill="#c8a96e" opacity="0.6"/>
+  <circle cx="620" cy="100" r="1" fill="#fff" opacity="0.5"/>
+  <!-- 초원 배경 -->
+  <ellipse cx="350" cy="340" rx="420" ry="100" fill="#0a1a0a" opacity="0.8"/>
+  <ellipse cx="350" cy="330" rx="380" ry="80" fill="#0d1f0d"/>
+  <!-- 풀 디테일 -->
+  <path d="M50 280 Q55 260 52 250 M60 285 Q58 265 63 255 M70 278 Q75 258 70 248" stroke="#1a3a1a" stroke-width="1.5" fill="none" opacity="0.8"/>
+  <path d="M600 275 Q605 255 602 245 M612 280 Q610 260 615 250" stroke="#1a3a1a" stroke-width="1.5" fill="none" opacity="0.6"/>
+  <!-- 어린 코뿔소 (작고 두려운 모습) -->
+  <g transform="translate(220,190)">
+    <ellipse cx="50" cy="55" rx="42" ry="22" fill="#2a3545" opacity="0.9"/>
+    <ellipse cx="82" cy="44" rx="22" ry="18" fill="#2a3545"/>
+    <rect x="18" y="68" width="10" height="16" rx="4" fill="#253040"/>
+    <rect x="32" y="70" width="10" height="14" rx="4" fill="#253040"/>
+    <rect x="58" y="70" width="10" height="14" rx="4" fill="#253040"/>
+    <rect x="72" y="68" width="10" height="16" rx="4" fill="#253040"/>
+    <ellipse cx="98" cy="44" rx="10" ry="8" fill="#2a3545"/>
+    <!-- 아기 뿔 (작음) -->
+    <path d="M100 38 Q108 28 105 20" stroke="#3a4a5a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <!-- 눈 (두려움) -->
+    <circle cx="95" cy="40" r="3" fill="#c8a96e" opacity="0.9"/>
+    <circle cx="95" cy="40" r="1.5" fill="#0d1117"/>
+    <!-- 눈물 -->
+    <path d="M95 43 Q96 48 95 50" stroke="#7eb8c9" stroke-width="1" fill="none" opacity="0.7"/>
+  </g>
+  <!-- 쓰러진 코뿔소 실루엣 (어미/아비) - 뒤쪽 흐릿하게 -->
+  <g opacity="0.35" filter="url(#blur1)">
+    <ellipse cx="400" cy="250" rx="80" ry="25" fill="#1a2a35"/>
+    <ellipse cx="430" cy="235" rx="40" ry="20" fill="#1a2a35"/>
+  </g>
+  <!-- 밀렵꾼 인영 (오른쪽 멀리) -->
+  <g opacity="0.5" transform="translate(540,200)">
+    <rect x="0" y="0" width="12" height="40" rx="3" fill="#1a1a2a"/>
+    <circle cx="6" cy="-8" r="8" fill="#1a1a2a"/>
+    <path d="M-8 15 L-18 35" stroke="#1a1a2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M14 12 L22 8" stroke="#1a1a2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </g>
+  <!-- 달빛 광원 효과 -->
+  <ellipse cx="350" cy="180" rx="300" ry="80" fill="#c8a96e" opacity="0.02"/>
+</svg>`,
+
+ch2: `<svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="sky2" cx="50%" cy="50%" r="80%">
+      <stop offset="0%" stop-color="#1a1f35"/>
+      <stop offset="100%" stop-color="#0d1117"/>
+    </radialGradient>
+  </defs>
+  <rect width="700" height="320" fill="url(#sky2)"/>
+  <!-- 동물원 우리 창살 -->
+  <rect x="0" y="0" width="700" height="320" fill="none"/>
+  <line x1="80" y1="0" x2="80" y2="320" stroke="#2e3a50" stroke-width="8" opacity="0.7"/>
+  <line x1="160" y1="0" x2="160" y2="320" stroke="#2e3a50" stroke-width="8" opacity="0.7"/>
+  <line x1="540" y1="0" x2="540" y2="320" stroke="#2e3a50" stroke-width="8" opacity="0.7"/>
+  <line x1="620" y1="0" x2="620" y2="320" stroke="#2e3a50" stroke-width="8" opacity="0.7"/>
+  <line x1="0" y1="280" x2="700" y2="280" stroke="#2e3a50" stroke-width="6" opacity="0.5"/>
+  <!-- 바닥 -->
+  <rect x="0" y="270" width="700" height="50" fill="#141c14" opacity="0.9"/>
+  <!-- 배경 창문으로 보이는 밤하늘 -->
+  <rect x="170" y="0" width="360" height="275" fill="#0d1117"/>
+  <circle cx="400" cy="80" r="40" fill="#c8a96e" opacity="0.12"/>
+  <circle cx="400" cy="80" r="28" fill="#c8a96e" opacity="0.18"/>
+  <circle cx="410" cy="73" r="25" fill="#0d1117"/>
+  <circle cx="250" cy="40" r="1.5" fill="#fff" opacity="0.6"/>
+  <circle cx="320" cy="25" r="1" fill="#c8a96e" opacity="0.7"/>
+  <circle cx="480" cy="35" r="1.5" fill="#fff" opacity="0.5"/>
+  <circle cx="550" cy="55" r="1" fill="#fff" opacity="0.6"/>
+  <!-- 앙가부 (오른쪽 - 더 밝은 자태) -->
+  <g transform="translate(380,130)">
+    <ellipse cx="55" cy="60" rx="58" ry="28" fill="#3a4a5a" opacity="0.85"/>
+    <ellipse cx="95" cy="46" rx="28" ry="22" fill="#3a4a5a"/>
+    <rect x="15" y="78" width="12" height="20" rx="4" fill="#2e3a48"/>
+    <rect x="33" y="80" width="12" height="18" rx="4" fill="#2e3a48"/>
+    <rect x="65" y="80" width="12" height="18" rx="4" fill="#2e3a48"/>
+    <rect x="83" y="78" width="12" height="20" rx="4" fill="#2e3a48"/>
+    <ellipse cx="114" cy="46" rx="12" ry="9" fill="#3a4a5a"/>
+    <path d="M116 38 Q126 24 122 14" stroke="#4a5a6a" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="110" cy="43" r="3.5" fill="#c8a96e" opacity="0.85"/>
+    <circle cx="110" cy="43" r="1.8" fill="#0d1117"/>
+  </g>
+  <!-- 노든 (왼쪽 - 어두운 모습) -->
+  <g transform="translate(140,145)">
+    <ellipse cx="50" cy="55" rx="52" ry="26" fill="#253040" opacity="0.9"/>
+    <ellipse cx="86" cy="43" rx="26" ry="20" fill="#253040"/>
+    <rect x="10" y="72" width="12" height="20" rx="4" fill="#1e2a38"/>
+    <rect x="28" y="74" width="12" height="18" rx="4" fill="#1e2a38"/>
+    <rect x="58" y="74" width="12" height="18" rx="4" fill="#1e2a38"/>
+    <rect x="76" y="72" width="12" height="20" rx="4" fill="#1e2a38"/>
+    <ellipse cx="104" cy="43" rx="12" ry="9" fill="#253040"/>
+    <path d="M106 35 Q115 22 112 12" stroke="#354555" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="100" cy="40" r="3" fill="#7eb8c9" opacity="0.7"/>
+    <circle cx="100" cy="40" r="1.5" fill="#0d1117"/>
+  </g>
+  <!-- 연결선 (두 코뿔소 사이 교감) -->
+  <path d="M260 195 Q350 175 385 195" stroke="#c8a96e" stroke-width="1" fill="none" opacity="0.3" stroke-dasharray="4,4"/>
+</svg>`,
+
+ch3: `<svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="warm3" cx="50%" cy="60%" r="70%">
+      <stop offset="0%" stop-color="#2a1f15"/>
+      <stop offset="100%" stop-color="#0d1117"/>
+    </radialGradient>
+    <filter id="glow3"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="700" height="320" fill="url(#warm3)"/>
+  <!-- 펭귄 우리 바닥 (얼음/타일) -->
+  <rect x="0" y="240" width="700" height="80" fill="#12181a"/>
+  <line x1="0" y1="240" x2="700" y2="240" stroke="#1e2a30" stroke-width="2"/>
+  <!-- 조약돌 둥지 -->
+  <ellipse cx="350" cy="258" rx="65" ry="18" fill="#1a2228"/>
+  <ellipse cx="350" cy="256" rx="55" ry="14" fill="#1e2835"/>
+  <circle cx="308" cy="255" r="5" fill="#253040"/>
+  <circle cx="320" cy="260" r="4" fill="#1e2830"/>
+  <circle cx="375" cy="254" r="5" fill="#253040"/>
+  <circle cx="392" cy="259" r="4" fill="#1e2830"/>
+  <!-- 알 (따뜻한 빛) -->
+  <ellipse cx="350" cy="248" rx="22" ry="26" fill="#e8d5a0" opacity="0.15" filter="url(#glow3)"/>
+  <ellipse cx="350" cy="248" rx="16" ry="19" fill="#d4b870" opacity="0.25"/>
+  <ellipse cx="350" cy="248" rx="13" ry="16" fill="#c8a855" opacity="0.35"/>
+  <ellipse cx="350" cy="248" rx="10" ry="13" fill="#b89840" opacity="0.5"/>
+  <ellipse cx="345" cy="242" rx="3" ry="4" fill="#e0c878" opacity="0.5"/>
+  <!-- 윔보 (오른쪽, 밝음) -->
+  <g transform="translate(420,185)">
+    <ellipse cx="25" cy="42" rx="20" ry="28" fill="#253040"/>
+    <ellipse cx="25" cy="35" rx="17" ry="20" fill="#2a3848"/>
+    <ellipse cx="25" cy="36" rx="10" ry="13" fill="#344a58"/>
+    <circle cx="18" cy="31" r="3" fill="#c8a96e" opacity="0.9"/>
+    <circle cx="18" cy="31" r="1.5" fill="#0d1117"/>
+    <circle cx="32" cy="31" r="3" fill="#c8a96e" opacity="0.9"/>
+    <circle cx="32" cy="31" r="1.5" fill="#0d1117"/>
+    <path d="M12 48 Q8 54 10 60" stroke="#1e2a38" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M38 48 Q42 54 40 60" stroke="#1e2a38" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </g>
+  <!-- 치쿠 (왼쪽, 한쪽 눈 없음) -->
+  <g transform="translate(240,180)">
+    <ellipse cx="25" cy="48" rx="22" ry="30" fill="#1e2a38"/>
+    <ellipse cx="25" cy="40" rx="18" ry="22" fill="#253040"/>
+    <ellipse cx="25" cy="41" rx="11" ry="14" fill="#2e3e50"/>
+    <!-- 왼쪽 눈 (없음 - 상처 표시) -->
+    <path d="M14 34 Q16 32 18 34" stroke="#3a2a2a" stroke-width="2" fill="none"/>
+    <!-- 오른쪽 눈 -->
+    <circle cx="32" cy="33" r="3.5" fill="#c8a96e" opacity="0.9"/>
+    <circle cx="32" cy="33" r="1.8" fill="#0d1117"/>
+    <path d="M10 54 Q6 60 8 66" stroke="#182030" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M40 54 Q44 60 42 66" stroke="#182030" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </g>
+  <!-- 폭격 소리 표현 (먼 불빛) -->
+  <circle cx="80" cy="60" r="25" fill="#c85a20" opacity="0.08"/>
+  <circle cx="80" cy="60" r="15" fill="#c87a30" opacity="0.1"/>
+  <circle cx="620" cy="80" r="20" fill="#c85a20" opacity="0.06"/>
+  <!-- 별 -->
+  <circle cx="400" cy="25" r="1.5" fill="#fff" opacity="0.4"/>
+  <circle cx="500" cy="45" r="1" fill="#c8a96e" opacity="0.5"/>
+  <circle cx="200" cy="35" r="1" fill="#fff" opacity="0.3"/>
+</svg>`,
+
+ch4: `<svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky4" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="60%" stop-color="#1a1f35"/>
+      <stop offset="100%" stop-color="#0f1a0f"/>
+    </linearGradient>
+  </defs>
+  <rect width="700" height="320" fill="url(#sky4)"/>
+  <!-- 폭격 잔해 배경 -->
+  <rect x="0" y="200" width="700" height="120" fill="#0a1208"/>
+  <!-- 무너진 울타리 -->
+  <line x1="0" y1="180" x2="200" y2="175" stroke="#3a4a5a" stroke-width="6"/>
+  <line x1="550" y1="180" x2="700" y2="170" stroke="#3a4a5a" stroke-width="6"/>
+  <!-- 부러진 울타리 기둥 -->
+  <rect x="190" y="160" width="8" height="90" rx="3" fill="#2e3a4a" transform="rotate(25,194,205)"/>
+  <rect x="545" y="155" width="8" height="90" rx="3" fill="#2e3a4a" transform="rotate(-20,549,200)"/>
+  <!-- 연기/먼지 -->
+  <ellipse cx="200" cy="180" rx="60" ry="25" fill="#1a2030" opacity="0.6"/>
+  <ellipse cx="500" cy="175" rx="50" ry="20" fill="#1a2030" opacity="0.5"/>
+  <!-- 먼 불길 -->
+  <ellipse cx="600" cy="200" rx="30" ry="15" fill="#8a3010" opacity="0.3"/>
+  <ellipse cx="600" cy="195" rx="18" ry="10" fill="#c86020" opacity="0.2"/>
+  <!-- 노든 (위풍당당하게 서 있음) -->
+  <g transform="translate(330,155)">
+    <ellipse cx="55" cy="68" rx="58" ry="28" fill="#2e3d50"/>
+    <ellipse cx="93" cy="52" rx="30" ry="24" fill="#2e3d50"/>
+    <rect x="15" y="85" width="13" height="22" rx="5" fill="#253040"/>
+    <rect x="34" y="87" width="13" height="20" rx="5" fill="#253040"/>
+    <rect x="67" y="87" width="13" height="20" rx="5" fill="#253040"/>
+    <rect x="86" y="85" width="13" height="22" rx="5" fill="#253040"/>
+    <ellipse cx="114" cy="52" rx="13" ry="10" fill="#2e3d50"/>
+    <path d="M116 42 Q127 26 123 14" stroke="#405060" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <circle cx="110" cy="48" r="4" fill="#c8a96e" opacity="0.9"/>
+    <circle cx="110" cy="48" r="2" fill="#0d1117"/>
+  </g>
+  <!-- 치쿠 (양동이 물고 접근) -->
+  <g transform="translate(200,210)">
+    <ellipse cx="25" cy="44" rx="20" ry="27" fill="#1e2a38"/>
+    <ellipse cx="25" cy="36" rx="16" ry="19" fill="#253040"/>
+    <!-- 눈 (한쪽만) -->
+    <circle cx="32" cy="32" r="3" fill="#c8a96e" opacity="0.9"/>
+    <circle cx="32" cy="32" r="1.5" fill="#0d1117"/>
+    <!-- 양동이 -->
+    <rect x="4" y="42" width="22" height="16" rx="3" fill="#4a5a6a" opacity="0.9"/>
+    <path d="M6 42 Q15 36 26 42" stroke="#5a6a7a" stroke-width="2" fill="none"/>
+    <!-- 알 빛 -->
+    <ellipse cx="15" cy="48" rx="7" ry="7" fill="#c8a855" opacity="0.25"/>
+  </g>
+  <!-- 달 -->
+  <circle cx="120" cy="55" r="30" fill="#c8a96e" opacity="0.1"/>
+  <circle cx="120" cy="55" r="20" fill="#c8a96e" opacity="0.18"/>
+  <circle cx="128" cy="49" r="18" fill="#0d1117"/>
+  <!-- 별 -->
+  <circle cx="300" cy="25" r="1.5" fill="#fff" opacity="0.6"/>
+  <circle cx="500" cy="35" r="1" fill="#c8a96e" opacity="0.7"/>
+  <circle cx="650" cy="20" r="1.5" fill="#fff" opacity="0.5"/>
+</svg>`,
+
+ch5: `<svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="sky5" cx="50%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#0f1a28"/>
+      <stop offset="100%" stop-color="#0d1117"/>
+    </radialGradient>
+  </defs>
+  <rect width="700" height="320" fill="url(#sky5)"/>
+  <!-- 별 하늘 (많음, 서정적) -->
+  <circle cx="50" cy="20" r="1.5" fill="#fff" opacity="0.6"/>
+  <circle cx="120" cy="35" r="1" fill="#c8a96e" opacity="0.8"/>
+  <circle cx="200" cy="15" r="1.5" fill="#fff" opacity="0.5"/>
+  <circle cx="280" cy="40" r="1" fill="#fff" opacity="0.7"/>
+  <circle cx="360" cy="10" r="1.5" fill="#c8a96e" opacity="0.9"/>
+  <circle cx="440" cy="30" r="1" fill="#fff" opacity="0.6"/>
+  <circle cx="520" cy="18" r="1.5" fill="#fff" opacity="0.5"/>
+  <circle cx="600" cy="42" r="1" fill="#c8a96e" opacity="0.7"/>
+  <circle cx="670" cy="22" r="1.5" fill="#fff" opacity="0.4"/>
+  <circle cx="90" cy="65" r="1" fill="#fff" opacity="0.4"/>
+  <circle cx="175" cy="58" r="1" fill="#fff" opacity="0.5"/>
+  <circle cx="460" cy="60" r="1" fill="#fff" opacity="0.3"/>
+  <circle cx="580" cy="70" r="1" fill="#c8a96e" opacity="0.5"/>
+  <!-- 웅덩이/물 (별 반사) -->
+  <ellipse cx="350" cy="295" rx="200" ry="30" fill="#111820"/>
+  <ellipse cx="350" cy="295" rx="180" ry="25" fill="#0f1620"/>
+  <!-- 웅덩이에 반사된 별 -->
+  <circle cx="280" cy="292" r="1" fill="#c8a96e" opacity="0.4"/>
+  <circle cx="340" cy="298" r="1.5" fill="#fff" opacity="0.3"/>
+  <circle cx="410" cy="290" r="1" fill="#c8a96e" opacity="0.5"/>
+  <circle cx="360" cy="300" r="1" fill="#fff" opacity="0.3"/>
+  <!-- 들판 -->
+  <rect x="0" y="260" width="700" height="60" fill="#0a1208"/>
+  <path d="M0 260 Q175 245 350 258 Q525 270 700 255 L700 320 L0 320Z" fill="#0d1a0d"/>
+  <!-- 풀 -->
+  <path d="M100 260 Q103 245 100 238 M110 263 Q107 248 112 240" stroke="#1a3020" stroke-width="1.5" fill="none"/>
+  <path d="M580 255 Q583 240 580 233 M590 258 Q587 243 592 235" stroke="#1a3020" stroke-width="1.5" fill="none"/>
+  <!-- 노든과 치쿠 (나란히, 서로 바라봄) -->
+  <!-- 노든 -->
+  <g transform="translate(310,170)">
+    <ellipse cx="55" cy="65" rx="55" ry="26" fill="#2e3d50"/>
+    <ellipse cx="91" cy="50" rx="28" ry="22" fill="#2e3d50"/>
+    <rect x="14" y="82" width="12" height="20" rx="4" fill="#253040"/>
+    <rect x="32" y="84" width="12" height="18" rx="4" fill="#253040"/>
+    <rect x="64" y="84" width="12" height="18" rx="4" fill="#253040"/>
+    <rect x="82" y="82" width="12" height="20" rx="4" fill="#253040"/>
+    <ellipse cx="110" cy="50" rx="12" ry="9" fill="#2e3d50"/>
+    <path d="M112 42 Q122 28 118 17" stroke="#405060" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="107" cy="47" r="3.5" fill="#c8a96e" opacity="0.9"/>
+    <circle cx="107" cy="47" r="1.8" fill="#0d1117"/>
+  </g>
+  <!-- 치쿠 (노든 발치에) -->
+  <g transform="translate(260,235)">
+    <ellipse cx="22" cy="38" rx="18" ry="24" fill="#1e2a38"/>
+    <ellipse cx="22" cy="31" rx="15" ry="17" fill="#253040"/>
+    <circle cx="28" cy="27" r="3" fill="#c8a96e" opacity="0.9"/>
+    <circle cx="28" cy="27" r="1.5" fill="#0d1117"/>
+    <path d="M8 44 Q4 50 6 56" stroke="#182030" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M36 44 Q40 50 38 56" stroke="#182030" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  </g>
+  <!-- 교감 표현 - 따뜻한 빛줄기 -->
+  <line x1="370" y1="215" x2="285" y2="245" stroke="#c8a96e" stroke-width="1" opacity="0.2" stroke-dasharray="3,5"/>
+  <!-- 별자리 강조 -->
+  <line x1="360" y1="10" x2="380" y2="25" stroke="#c8a96e" stroke-width="0.8" opacity="0.4"/>
+  <line x1="380" y1="25" x2="400" y2="15" stroke="#c8a96e" stroke-width="0.8" opacity="0.4"/>
+</svg>`,
+
+ch6: `<svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky6" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="50%" stop-color="#0f1825"/>
+      <stop offset="100%" stop-color="#0d1117"/>
+    </linearGradient>
+  </defs>
+  <rect width="700" height="320" fill="url(#sky6)"/>
+  <!-- 길고 황량한 들판 -->
+  <path d="M0 230 Q350 210 700 225 L700 320 L0 320Z" fill="#0a1208"/>
+  <path d="M0 240 Q350 220 700 235 L700 320 L0 320Z" fill="#0d1a0d"/>
+  <!-- 발자국 (노든의 큰 발자국, 치쿠의 작은 발자국) -->
+  <ellipse cx="580" cy="265" rx="14" ry="8" fill="#1a2a1a" opacity="0.8"/>
+  <ellipse cx="555" cy="272" rx="14" ry="8" fill="#1a2a1a" opacity="0.8"/>
+  <ellipse cx="530" cy="263" rx="14" ry="8" fill="#1a2a1a" opacity="0.7"/>
+  <ellipse cx="505" cy="270" rx="14" ry="8" fill="#1a2a1a" opacity="0.6"/>
+  <!-- 치쿠 발자국 (작음) -->
+  <ellipse cx="570" cy="272" rx="4" ry="2.5" fill="#1e3020" opacity="0.7"/>
+  <ellipse cx="548" cy="278" rx="4" ry="2.5" fill="#1e3020" opacity="0.7"/>
+  <ellipse cx="523" cy="270" rx="4" ry="2.5" fill="#1e3020" opacity="0.6"/>
+  <!-- 노든 (뒷모습, 왼쪽으로 걷는 중) -->
+  <g transform="translate(120,165)">
+    <ellipse cx="55" cy="65" rx="55" ry="26" fill="#2e3d50"/>
+    <ellipse cx="18" cy="50" rx="28" ry="22" fill="#2e3d50"/>
+    <rect x="14" y="82" width="12" height="20" rx="4" fill="#253040"/>
+    <rect x="32" y="84" width="12" height="18" rx="4" fill="#253040"/>
+    <rect x="64" y="84" width="12" height="18" rx="4" fill="#253040"/>
+    <rect x="82" y="82" width="12" height="20" rx="4" fill="#253040"/>
+    <ellipse cx="0" cy="50" rx="12" ry="9" fill="#2e3d50"/>
+    <path d="M-2 42 Q-14 28 -10 17" stroke="#405060" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </g>
+  <!-- 치쿠 (노든 옆, 역시 뒷모습) -->
+  <g transform="translate(195,230)">
+    <ellipse cx="20" cy="34" rx="18" ry="22" fill="#1e2a38"/>
+    <ellipse cx="20" cy="26" rx="14" ry="16" fill="#253040"/>
+    <!-- 양동이 (입에 물고) -->
+    <rect x="6" y="34" width="16" height="12" rx="2" fill="#4a5a6a" opacity="0.9"/>
+    <path d="M8 34 Q14 29 22 34" stroke="#5a6a7a" stroke-width="1.5" fill="none"/>
+    <!-- 알빛 -->
+    <ellipse cx="14" cy="39" rx="5" ry="5" fill="#c8a855" opacity="0.2"/>
+    <path d="M4 46 Q0 52 2 58" stroke="#182030" stroke-width="2.5" fill="none"/>
+    <path d="M36 46 Q40 52 38 58" stroke="#182030" stroke-width="2.5" fill="none"/>
+  </g>
+  <!-- 밤하늘 -->
+  <circle cx="350" cy="70" r="45" fill="#c8a96e" opacity="0.07"/>
+  <circle cx="350" cy="70" r="28" fill="#c8a96e" opacity="0.14"/>
+  <circle cx="362" cy="62" r="25" fill="#0d1117"/>
+  <!-- 별 많이 -->
+  <circle cx="80" cy="25" r="1.5" fill="#fff" opacity="0.6"/>
+  <circle cx="150" cy="40" r="1" fill="#c8a96e" opacity="0.7"/>
+  <circle cx="220" cy="18" r="1.5" fill="#fff" opacity="0.5"/>
+  <circle cx="430" cy="30" r="1" fill="#fff" opacity="0.6"/>
+  <circle cx="510" cy="15" r="1.5" fill="#c8a96e" opacity="0.8"/>
+  <circle cx="580" cy="38" r="1" fill="#fff" opacity="0.5"/>
+  <circle cx="650" cy="22" r="1.5" fill="#fff" opacity="0.7"/>
+  <circle cx="60" cy="90" r="1" fill="#fff" opacity="0.3"/>
+  <circle cx="480" cy="85" r="1" fill="#c8a96e" opacity="0.4"/>
+</svg>`,
+
+ch7: `<svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="sky7" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a1020"/>
+      <stop offset="100%" stop-color="#0d1117"/>
+    </radialGradient>
+    <filter id="glow7"><feGaussianBlur stdDeviation="5"/></filter>
+  </defs>
+  <rect width="700" height="320" fill="url(#sky7)"/>
+  <!-- 황야 -->
+  <path d="M0 250 Q350 235 700 248 L700 320 L0 320Z" fill="#0a1208"/>
+  <!-- 치쿠 (쓰러져 있음, 왼쪽) -->
+  <g transform="translate(160,228)">
+    <ellipse cx="30" cy="20" rx="28" ry="15" fill="#1e2a38" opacity="0.9"/>
+    <ellipse cx="30" cy="13" rx="18" ry="14" fill="#253040"/>
+    <!-- 눈 (한쪽만, 흐릿하게) -->
+    <circle cx="35" cy="10" r="3" fill="#c8a96e" opacity="0.5"/>
+    <circle cx="35" cy="10" r="1.5" fill="#0d1117"/>
+    <!-- 양동이는 앞에 놓임 -->
+    <rect x="55" y="12" width="18" height="13" rx="3" fill="#4a5a6a" opacity="0.7"/>
+    <path d="M57 12 Q64 7 73 12" stroke="#5a6a7a" stroke-width="1.5" fill="none"/>
+    <!-- 알빛 (여전히) -->
+    <ellipse cx="64" cy="17" rx="6" ry="6" fill="#c8a855" opacity="0.3" filter="url(#glow7)"/>
+  </g>
+  <!-- 노든 (치쿠 곁에 엎드림) -->
+  <g transform="translate(250,175)">
+    <ellipse cx="60" cy="75" rx="65" ry="28" fill="#2e3d50"/>
+    <ellipse cx="20" cy="60" rx="32" ry="24" fill="#2e3d50"/>
+    <rect x="16" y="90" width="13" height="20" rx="4" fill="#253040"/>
+    <rect x="36" y="92" width="13" height="18" rx="4" fill="#253040"/>
+    <rect x="72" y="92" width="13" height="18" rx="4" fill="#253040"/>
+    <rect x="92" y="90" width="13" height="20" rx="4" fill="#253040"/>
+    <ellipse cx="0" cy="60" rx="13" ry="10" fill="#2e3d50"/>
+    <path d="M-2 52 Q-14 38 -10 27" stroke="#405060" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <!-- 눈물 같은 표현 -->
+    <circle cx="5" cy="57" r="3.5" fill="#7eb8c9" opacity="0.6"/>
+    <circle cx="5" cy="57" r="1.8" fill="#0d1117"/>
+    <path d="M5 61 Q6 67 5 70" stroke="#7eb8c9" stroke-width="1.2" fill="none" opacity="0.6"/>
+  </g>
+  <!-- 달 (낮게, 감정적) -->
+  <circle cx="100" cy="100" r="50" fill="#c8a96e" opacity="0.07" filter="url(#glow7)"/>
+  <circle cx="100" cy="100" r="32" fill="#c8a96e" opacity="0.14"/>
+  <circle cx="112" cy="90" r="28" fill="#0d1117"/>
+  <!-- 별 (조용히) -->
+  <circle cx="300" cy="30" r="1.5" fill="#fff" opacity="0.5"/>
+  <circle cx="450" cy="20" r="1" fill="#c8a96e" opacity="0.6"/>
+  <circle cx="580" cy="35" r="1.5" fill="#fff" opacity="0.4"/>
+  <circle cx="650" cy="55" r="1" fill="#fff" opacity="0.5"/>
+  <!-- 희미한 광채 (알) -->
+  <circle cx="305" cy="248" r="18" fill="#c8a855" opacity="0.08" filter="url(#glow7)"/>
+</svg>`,
+
+ch8: `<svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="dawn8" cx="70%" cy="80%" r="80%">
+      <stop offset="0%" stop-color="#1a2a1a"/>
+      <stop offset="50%" stop-color="#0f1a18"/>
+      <stop offset="100%" stop-color="#0d1117"/>
+    </radialGradient>
+    <filter id="glow8"><feGaussianBlur stdDeviation="6"/></filter>
+    <radialGradient id="eggLight" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#c8a855" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#c8a855" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="700" height="320" fill="url(#dawn8)"/>
+  <!-- 새벽빛 (지평선) -->
+  <ellipse cx="600" cy="320" rx="250" ry="120" fill="#1a3020" opacity="0.4"/>
+  <ellipse cx="600" cy="320" rx="160" ry="80" fill="#2a4a30" opacity="0.3"/>
+  <ellipse cx="600" cy="320" rx="90" ry="50" fill="#3a6040" opacity="0.2"/>
+  <!-- 들판 -->
+  <path d="M0 260 Q350 245 700 258 L700 320 L0 320Z" fill="#0a1208"/>
+  <!-- 알 (부화 직전, 강한 빛) -->
+  <circle cx="370" cy="265" r="40" fill="url(#eggLight)" filter="url(#glow8)"/>
+  <circle cx="370" cy="265" r="22" fill="#c8a855" opacity="0.2" filter="url(#glow8)"/>
+  <ellipse cx="370" cy="262" rx="14" ry="17" fill="#b89840" opacity="0.5"/>
+  <ellipse cx="370" cy="262" rx="10" ry="13" fill="#c8a855" opacity="0.6"/>
+  <!-- 균열 표현 -->
+  <path d="M365 255 L368 268 L363 278" stroke="#e0c050" stroke-width="1.5" fill="none" opacity="0.7"/>
+  <path d="M374 252 L371 262" stroke="#e0c050" stroke-width="1" fill="none" opacity="0.5"/>
+  <!-- 노든 (알 곁에 앉아 지킴) -->
+  <g transform="translate(200,160)">
+    <ellipse cx="60" cy="72" rx="60" ry="27" fill="#2e3d50"/>
+    <ellipse cx="22" cy="56" rx="30" ry="23" fill="#2e3d50"/>
+    <rect x="16" y="88" width="13" height="21" rx="4" fill="#253040"/>
+    <rect x="35" y="90" width="13" height="19" rx="4" fill="#253040"/>
+    <rect x="70" y="90" width="13" height="19" rx="4" fill="#253040"/>
+    <rect x="89" y="88" width="13" height="21" rx="4" fill="#253040"/>
+    <ellipse cx="2" cy="56" rx="13" ry="10" fill="#2e3d50"/>
+    <path d="M0 48 Q-12 34 -8 22" stroke="#405060" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <!-- 눈 (알을 바라봄) -->
+    <circle cx="8" cy="52" r="3.5" fill="#c8a96e" opacity="0.9"/>
+    <circle cx="8" cy="52" r="1.8" fill="#0d1117"/>
+  </g>
+  <!-- 별 (새벽에 사라지는 중) -->
+  <circle cx="100" cy="25" r="1.5" fill="#fff" opacity="0.4"/>
+  <circle cx="200" cy="40" r="1" fill="#c8a96e" opacity="0.5"/>
+  <circle cx="500" cy="18" r="1.5" fill="#fff" opacity="0.3"/>
+  <circle cx="280" cy="55" r="1" fill="#fff" opacity="0.3"/>
+</svg>`,
+
+ch9: `<svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="sky9" cx="50%" cy="50%" r="80%">
+      <stop offset="0%" stop-color="#0f1a28"/>
+      <stop offset="100%" stop-color="#0d1117"/>
+    </radialGradient>
+    <filter id="glow9"><feGaussianBlur stdDeviation="4"/></filter>
+  </defs>
+  <rect width="700" height="320" fill="url(#sky9)"/>
+  <!-- 많은 별 (기억 = 별) -->
+  <circle cx="40" cy="15" r="2" fill="#fff" opacity="0.6"/>
+  <circle cx="100" cy="35" r="1.5" fill="#c8a96e" opacity="0.8"/>
+  <circle cx="165" cy="12" r="1.5" fill="#fff" opacity="0.5"/>
+  <circle cx="230" cy="45" r="1" fill="#fff" opacity="0.7"/>
+  <circle cx="300" cy="8" r="2" fill="#c8a96e" opacity="0.9"/>
+  <circle cx="370" cy="28" r="1.5" fill="#fff" opacity="0.6"/>
+  <circle cx="440" cy="18" r="1" fill="#fff" opacity="0.5"/>
+  <circle cx="510" cy="40" r="1.5" fill="#c8a96e" opacity="0.7"/>
+  <circle cx="580" cy="14" r="1.5" fill="#fff" opacity="0.4"/>
+  <circle cx="650" cy="32" r="1" fill="#fff" opacity="0.6"/>
+  <circle cx="70" cy="65" r="1" fill="#fff" opacity="0.4"/>
+  <circle cx="145" cy="72" r="1" fill="#c8a96e" opacity="0.5"/>
+  <circle cx="420" cy="60" r="1.5" fill="#fff" opacity="0.4"/>
+  <circle cx="560" cy="68" r="1" fill="#fff" opacity="0.3"/>
+  <!-- 별자리 선 (치쿠의 기억) -->
+  <line x1="100" y1="35" x2="165" y2="12" stroke="#c8a96e" stroke-width="0.8" opacity="0.25"/>
+  <line x1="165" y1="12" x2="230" y2="45" stroke="#c8a96e" stroke-width="0.8" opacity="0.25"/>
+  <line x1="300" y1="8" x2="370" y2="28" stroke="#c8a96e" stroke-width="0.8" opacity="0.25"/>
+  <line x1="370" y1="28" x2="440" y2="18" stroke="#c8a96e" stroke-width="0.8" opacity="0.25"/>
+  <!-- 들판 -->
+  <path d="M0 255 Q350 240 700 253 L700 320 L0 320Z" fill="#0a1208"/>
+  <!-- 노든 (앉아서 이야기하는 자세) -->
+  <g transform="translate(300,165)">
+    <ellipse cx="60" cy="78" rx="65" ry="28" fill="#2e3d50"/>
+    <ellipse cx="22" cy="60" rx="32" ry="24" fill="#2e3d50"/>
+    <rect x="14" y="94" width="13" height="20" rx="4" fill="#253040"/>
+    <rect x="34" y="96" width="13" height="18" rx="4" fill="#253040"/>
+    <rect x="72" y="96" width="13" height="18" rx="4" fill="#253040"/>
+    <rect x="92" y="94" width="13" height="20" rx="4" fill="#253040"/>
+    <ellipse cx="2" cy="60" rx="13" ry="10" fill="#2e3d50"/>
+    <path d="M0 52 Q-14 38 -10 26" stroke="#405060" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <!-- 눈 (부드럽게) -->
+    <circle cx="8" cy="56" r="3.5" fill="#c8a96e" opacity="0.85"/>
+    <circle cx="8" cy="56" r="1.8" fill="#0d1117"/>
+  </g>
+  <!-- 아기 펭귄 (작고 새로움) -->
+  <g transform="translate(245,245)">
+    <ellipse cx="16" cy="28" rx="14" ry="19" fill="#1e2a38"/>
+    <ellipse cx="16" cy="21" rx="11" ry="13" fill="#253040"/>
+    <ellipse cx="16" cy="22" rx="7" ry="9" fill="#2e3e50"/>
+    <circle cx="20" cy="18" r="2.5" fill="#c8a96e" opacity="0.9"/>
+    <circle cx="20" cy="18" r="1.2" fill="#0d1117"/>
+    <circle cx="12" cy="18" r="2.5" fill="#c8a96e" opacity="0.9"/>
+    <circle cx="12" cy="18" r="1.2" fill="#0d1117"/>
+    <path d="M5 34 Q1 40 3 46" stroke="#182030" stroke-width="2" fill="none"/>
+    <path d="M27 34 Q31 40 29 46" stroke="#182030" stroke-width="2" fill="none"/>
+  </g>
+  <!-- 이야기 흐름 (빛) -->
+  <path d="M310 195 Q275 220 260 252" stroke="#c8a96e" stroke-width="1" opacity="0.15" stroke-dasharray="3,6"/>
+</svg>`,
+
+ch10: `<svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="dawn10" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0d1820"/>
+      <stop offset="40%" stop-color="#0f2a2a"/>
+      <stop offset="70%" stop-color="#1a3a2a"/>
+      <stop offset="100%" stop-color="#0d2218"/>
+    </linearGradient>
+    <linearGradient id="sea10" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0a2535"/>
+      <stop offset="100%" stop-color="#061520"/>
+    </linearGradient>
+    <filter id="glow10"><feGaussianBlur stdDeviation="5"/></filter>
+  </defs>
+  <rect width="700" height="320" fill="url(#dawn10)"/>
+  <!-- 새벽 바다 (수평선) -->
+  <rect x="0" y="200" width="700" height="120" fill="url(#sea10)"/>
+  <!-- 수평선 빛 -->
+  <ellipse cx="350" cy="200" rx="500" ry="30" fill="#1a5040" opacity="0.3"/>
+  <ellipse cx="350" cy="200" rx="350" ry="18" fill="#2a7060" opacity="0.2"/>
+  <ellipse cx="350" cy="200" rx="200" ry="10" fill="#3a9080" opacity="0.15"/>
+  <!-- 파도 -->
+  <path d="M0 230 Q87 218 175 228 Q262 238 350 226 Q437 214 525 226 Q612 238 700 228" stroke="#1a4a5a" stroke-width="2" fill="none" opacity="0.6"/>
+  <path d="M0 248 Q87 236 175 246 Q262 256 350 244 Q437 232 525 244 Q612 256 700 246" stroke="#1a4a5a" stroke-width="1.5" fill="none" opacity="0.4"/>
+  <!-- 언덕 (뒤쪽) -->
+  <path d="M0 215 Q150 175 350 185 Q500 195 700 210 L700 220 L0 220Z" fill="#0d1a0d"/>
+  <!-- 아기 펭귄 (홀로 바다를 향해, 뒷모습) -->
+  <g transform="translate(310,188)">
+    <ellipse cx="18" cy="32" rx="16" ry="22" fill="#1e2a38"/>
+    <ellipse cx="18" cy="23" rx="12" ry="15" fill="#253040"/>
+    <ellipse cx="18" cy="24" rx="8" ry="10" fill="#2e3e50"/>
+    <path d="M4 38 Q0 46 2 54" stroke="#182030" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M32 38 Q36 46 34 54" stroke="#182030" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  </g>
+  <!-- 노든 (언덕 위, 바라보는 실루엣) -->
+  <g transform="translate(70,135)" opacity="0.7">
+    <ellipse cx="55" cy="60" rx="55" ry="24" fill="#1e2a38"/>
+    <ellipse cx="18" cy="46" rx="26" ry="20" fill="#1e2a38"/>
+    <rect x="14" y="74" width="11" height="18" rx="4" fill="#182030"/>
+    <rect x="30" y="76" width="11" height="16" rx="4" fill="#182030"/>
+    <rect x="60" y="76" width="11" height="16" rx="4" fill="#182030"/>
+    <rect x="76" y="74" width="11" height="18" rx="4" fill="#182030"/>
+    <ellipse cx="0" cy="46" rx="11" ry="8" fill="#1e2a38"/>
+    <path d="M-2 38 Q-12 26 -8 16" stroke="#2a3848" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <!-- 눈 (먼 곳을 바라봄) -->
+    <circle cx="5" cy="43" r="3" fill="#c8a96e" opacity="0.7"/>
+    <circle cx="5" cy="43" r="1.5" fill="#0d1117"/>
+  </g>
+  <!-- 시선 연결 (노든 → 펭귄) -->
+  <path d="M122 175 Q220 185 318 210" stroke="#c8a96e" stroke-width="0.8" opacity="0.15" stroke-dasharray="4,8"/>
+  <!-- 별 (아직 몇 개) -->
+  <circle cx="200" cy="30" r="1.5" fill="#fff" opacity="0.5"/>
+  <circle cx="400" cy="15" r="1.5" fill="#c8a96e" opacity="0.7"/>
+  <circle cx="560" cy="35" r="1" fill="#fff" opacity="0.4"/>
+  <circle cx="650" cy="20" r="1.5" fill="#fff" opacity="0.3"/>
+  <!-- 새벽빛 -->
+  <ellipse cx="350" cy="200" rx="400" ry="50" fill="#2a6050" opacity="0.05" filter="url(#glow10)"/>
+  <!-- 바다 반짝임 -->
+  <line x1="200" y1="238" x2="210" y2="235" stroke="#7eb8c9" stroke-width="1" opacity="0.3"/>
+  <line x1="350" y1="248" x2="360" y2="245" stroke="#7eb8c9" stroke-width="1" opacity="0.25"/>
+  <line x1="500" y1="235" x2="510" y2="232" stroke="#7eb8c9" stroke-width="1" opacity="0.3"/>
+</svg>`,
+
+ending_good: `<svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="eg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0d2030"/>
+      <stop offset="50%" stop-color="#0f3530"/>
+      <stop offset="100%" stop-color="#0a2520"/>
+    </linearGradient>
+    <filter id="gloweg"><feGaussianBlur stdDeviation="8"/></filter>
+  </defs>
+  <rect width="700" height="320" fill="url(#eg)"/>
+  <!-- 바다 -->
+  <rect x="0" y="195" width="700" height="125" fill="#061828"/>
+  <!-- 수평선 빛 (새벽) -->
+  <ellipse cx="350" cy="195" rx="600" ry="40" fill="#1a6050" opacity="0.3"/>
+  <ellipse cx="350" cy="195" rx="400" ry="25" fill="#2a8070" opacity="0.2"/>
+  <ellipse cx="350" cy="195" rx="220" ry="14" fill="#3a9080" opacity="0.3"/>
+  <!-- 파도 -->
+  <path d="M0 225 Q87 213 175 223 Q262 233 350 221 Q437 209 525 221 Q612 233 700 223" stroke="#1a5868" stroke-width="2" fill="none"/>
+  <path d="M0 245 Q87 233 175 243 Q262 253 350 241 Q437 229 525 241 Q612 253 700 241" stroke="#1a5060" stroke-width="1.5" fill="none" opacity="0.6"/>
+  <!-- 언덕 -->
+  <path d="M0 210 Q200 175 400 183 Q550 190 700 205 L700 215 L0 215Z" fill="#0d1a0d"/>
+  <!-- 아기 펭귄 (바다 앞에 서있음) -->
+  <g transform="translate(320,183)">
+    <ellipse cx="20" cy="36" rx="17" ry="24" fill="#1e2a38"/>
+    <ellipse cx="20" cy="26" rx="13" ry="16" fill="#253040"/>
+    <ellipse cx="20" cy="27" rx="8" ry="10" fill="#2e3e50"/>
+    <circle cx="24" cy="22" r="3" fill="#c8a96e" opacity="0.95"/>
+    <circle cx="24" cy="22" r="1.5" fill="#0d1117"/>
+    <circle cx="16" cy="22" r="3" fill="#c8a96e" opacity="0.95"/>
+    <circle cx="16" cy="22" r="1.5" fill="#0d1117"/>
+    <path d="M5 44 Q0 52 2 60" stroke="#182030" stroke-width="2.5" fill="none"/>
+    <path d="M35 44 Q40 52 38 60" stroke="#182030" stroke-width="2.5" fill="none"/>
+  </g>
+  <!-- 노든의 시선 (언덕 너머 실루엣) -->
+  <g opacity="0.45" transform="translate(50,120)">
+    <ellipse cx="60" cy="65" rx="60" ry="25" fill="#1e2a38"/>
+    <ellipse cx="20" cy="50" rx="28" ry="21" fill="#1e2a38"/>
+    <rect x="14" y="80" width="12" height="18" rx="4" fill="#182030"/>
+    <rect x="32" y="82" width="12" height="16" rx="4" fill="#182030"/>
+    <rect x="66" y="82" width="12" height="16" rx="4" fill="#182030"/>
+    <rect x="84" y="80" width="12" height="18" rx="4" fill="#182030"/>
+    <ellipse cx="0" cy="50" rx="12" ry="9" fill="#1e2a38"/>
+    <path d="M-1 43 Q-12 30 -8 18" stroke="#2a3848" stroke-width="2.5" fill="none"/>
+  </g>
+  <!-- 별과 별빛 -->
+  <circle cx="150" cy="25" r="2" fill="#c8a96e" opacity="0.8" filter="url(#gloweg)"/>
+  <circle cx="150" cy="25" r="1.5" fill="#c8a96e" opacity="0.9"/>
+  <circle cx="300" cy="15" r="1.5" fill="#fff" opacity="0.6"/>
+  <circle cx="450" cy="28" r="2" fill="#c8a96e" opacity="0.7" filter="url(#gloweg)"/>
+  <circle cx="450" cy="28" r="1.5" fill="#c8a96e" opacity="0.9"/>
+  <circle cx="580" cy="18" r="1.5" fill="#fff" opacity="0.5"/>
+  <circle cx="650" cy="40" r="1" fill="#c8a96e" opacity="0.6"/>
+  <!-- 바다 반짝임 (더 많이) -->
+  <line x1="160" y1="235" x2="172" y2="231" stroke="#7eb8c9" stroke-width="1.5" opacity="0.4"/>
+  <line x1="290" y1="248" x2="302" y2="244" stroke="#7eb8c9" stroke-width="1.5" opacity="0.35"/>
+  <line x1="430" y1="238" x2="442" y2="234" stroke="#7eb8c9" stroke-width="1.5" opacity="0.4"/>
+  <line x1="560" y1="245" x2="572" y2="241" stroke="#7eb8c9" stroke-width="1.5" opacity="0.3"/>
+</svg>`,
+
+ending_bad: `<svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="eb" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a0f0f"/>
+      <stop offset="100%" stop-color="#0d1117"/>
+    </radialGradient>
+  </defs>
+  <rect width="700" height="320" fill="url(#eb)"/>
+  <!-- 동물원 우리 (배드엔딩 배경) -->
+  <line x1="100" y1="0" x2="100" y2="320" stroke="#2e3a50" stroke-width="7" opacity="0.8"/>
+  <line x1="220" y1="0" x2="220" y2="320" stroke="#2e3a50" stroke-width="7" opacity="0.8"/>
+  <line x1="480" y1="0" x2="480" y2="320" stroke="#2e3a50" stroke-width="7" opacity="0.8"/>
+  <line x1="600" y1="0" x2="600" y2="320" stroke="#2e3a50" stroke-width="7" opacity="0.8"/>
+  <line x1="0" y1="290" x2="700" y2="290" stroke="#2e3a50" stroke-width="5" opacity="0.6"/>
+  <rect x="0" y="285" width="700" height="35" fill="#0a1010"/>
+  <!-- 우리 안 -->
+  <rect x="110" y="0" width="360" height="285" fill="#0d1117"/>
+  <!-- 작은 펭귄 (우리 안에 혼자) -->
+  <g transform="translate(290,210)">
+    <ellipse cx="20" cy="38" rx="18" ry="25" fill="#1e2a38"/>
+    <ellipse cx="20" cy="28" rx="14" ry="17" fill="#253040"/>
+    <ellipse cx="20" cy="29" rx="9" ry="11" fill="#2e3e50"/>
+    <!-- 눈 (슬픔) -->
+    <circle cx="25" cy="24" r="3" fill="#7eb8c9" opacity="0.7"/>
+    <circle cx="25" cy="24" r="1.5" fill="#0d1117"/>
+    <circle cx="15" cy="24" r="3" fill="#7eb8c9" opacity="0.7"/>
+    <circle cx="15" cy="24" r="1.5" fill="#0d1117"/>
+    <path d="M6 46 Q2 54 4 62" stroke="#182030" stroke-width="2.5" fill="none"/>
+    <path d="M34 46 Q38 54 36 62" stroke="#182030" stroke-width="2.5" fill="none"/>
+  </g>
+  <!-- 우리 밖 (창문으로 보이는 바다) -->
+  <rect x="230" y="50" width="200" height="120" rx="4" fill="#061520"/>
+  <rect x="233" y="53" width="194" height="114" rx="2" fill="#081a28"/>
+  <!-- 창문 안 바다 -->
+  <ellipse cx="330" cy="163" rx="120" ry="20" fill="#1a5040" opacity="0.4"/>
+  <path d="M233 140 Q280 130 330 138 Q380 146 424 138" stroke="#1a4858" stroke-width="1.5" fill="none"/>
+  <path d="M233 155 Q280 145 330 153 Q380 161 424 153" stroke="#1a4858" stroke-width="1" fill="none" opacity="0.6"/>
+  <!-- 창문 틀 -->
+  <rect x="230" y="50" width="200" height="120" rx="4" fill="none" stroke="#2e3a50" stroke-width="3"/>
+  <line x1="330" y1="50" x2="330" y2="170" stroke="#2e3a50" stroke-width="2"/>
+  <line x1="230" y1="110" x2="430" y2="110" stroke="#2e3a50" stroke-width="2"/>
+  <!-- 희미한 별 (창밖) -->
+  <circle cx="270" cy="70" r="1" fill="#fff" opacity="0.3"/>
+  <circle cx="380" cy="65" r="1" fill="#c8a96e" opacity="0.4"/>
+  <circle cx="410" cy="80" r="1" fill="#fff" opacity="0.3"/>
+</svg>`
+};
+
+// ══════════════════════════════════════
+// 게임 데이터
+// ══════════════════════════════════════
+const CHAPTERS = [
+  {
+    id: 1,
+    pov: "노든 시점",
+    title: "뿔이 사라진 밤",
+    quote: "\"나는 기억한다. 그날 밤의 냄새를, 아내의 마지막 숨결을.\"",
+    image: "ch1",
+    text: `초원의 밤은 고요했다. 하지만 어린 노든의 귀에는 낯선 발소리가 들렸다.\n\n코끼리 고아원 울타리 너머에서, 밀렵꾼들이 움직이고 있었다. 어미와 아비의 숨소리가 점점 빨라졌다. 노든은 풀숲에 몸을 숨긴 채 그 소리를 들었다.\n\n무언가를 해야 했다. 하지만 다리가 움직이지 않았다.`,
+    choices: [
+      { text: "소리를 질러 코끼리들에게 알린다.", next: "ch2" },
+      { text: "두려워서 그 자리에 굳어버린다.", next: "bad1" }
+    ]
+  },
+  {
+    id: 2,
+    pov: "노든 시점",
+    title: "앙가부의 약속",
+    quote: "\"살아있다는 건 기억한다는 것이다. 앙가부, 너는 그걸 알고 있었지.\"",
+    image: "ch2",
+    text: `동물원의 밤은 쇠창살 냄새가 났다. 노든은 오래도록 아무것도 먹지 않았다.\n\n그에게 말을 건네온 건 같은 코뿔소 앙가부였다. 앙가부는 매일 밤 노든의 이야기를 들어주었다. 분노도, 슬픔도, 침묵도.\n\n어느 날 앙가부가 말했다.\n\n<span class="dialogue">"노든, 네 분노를 복수에만 쓰면 넌 결국 혼자가 돼."</span>`,
+    choices: [
+      { text: "\"그래도 나는 복수해야 해. 그게 내가 살아있는 이유야.\"", next: "ch3" },
+      { text: "\"복수 같은 건 없어. 아무것도 의미 없어.\"", next: "bad2" }
+    ]
+  },
+  {
+    id: 3,
+    pov: "치쿠 시점",
+    title: "알을 안고",
+    quote: "\"윔보는 항상 내 오른쪽에 있었다. 내가 볼 수 없는 쪽에.\"",
+    image: "ch3",
+    text: `펭귄 구역에는 윔보와 치쿠가 있었다. 치쿠는 한쪽 눈이 없었다. 그래서 윔보는 항상 치쿠의 오른쪽에 서 있었다.\n\n둘은 알을 함께 품었다. 따뜻하고 소중한 알이었다.\n\n멀리서 폭격 소리가 들렸다. 사육사들이 황급히 도망쳤다. 윔보가 말했다.\n\n<span class="dialogue">"치쿠, 우리 이 알을 반드시 세상에 내보내야 해."</span>`,
+    choices: [
+      { text: "알을 양동이에 담아 안전한 곳으로 옮긴다.", next: "ch4" },
+      { text: "알보다 윔보 곁에 머물기로 한다.", next: "bad3" }
+    ]
+  },
+  {
+    id: 4,
+    pov: "치쿠 시점",
+    title: "울타리 너머로",
+    quote: "\"윔보, 나 잘 갈게. 네가 항상 서 있던 오른쪽을 기억하면서.\"",
+    image: "ch4",
+    text: `폭격으로 울타리가 무너졌다. 치쿠는 알이 담긴 양동이를 입에 물었다.\n\n뒤돌아보았다. 윔보는 무너진 기둥 아래 쓰러져 있었다. 이미 숨이 없었다.\n\n치쿠는 한참 그 자리에 서 있었다. 그리고 발을 뗐다.\n\n울타리 너머, 처음 보는 세상. 그리고 어둠 속에 거대한 코뿔소 한 마리가 서 있었다.`,
+    choices: [
+      { text: "조심스럽게 다가가 말을 건다.", next: "ch5" },
+      { text: "무서워서 코뿔소를 피해 혼자 다른 길로 간다.", next: "bad4" }
+    ]
+  },
+  {
+    id: 5,
+    pov: "노든·치쿠 시점",
+    title: "처음 만난 이름",
+    quote: "\"이름을 묻는다는 건, 네가 사라지지 않기를 바란다는 뜻이다.\"",
+    image: "ch5",
+    text: `폐허가 된 도시 외곽. 코뿔소와 펭귄이 나란히 앉았다.\n\n<span class="dialogue">"이름이 뭐야?"</span>\n<span class="dialogue">"치쿠예요. 당신은요?"</span>\n<span class="dialogue">"노든."</span>\n\n노든은 치쿠의 한쪽 눈이 없다는 걸 알아챘다. 치쿠는 노든이 무언가 무거운 것을 등에 짊어지고 있다는 걸 느꼈다.\n\n<span class="dialogue">"바다는 어떤 곳이야?"</span>\n<span class="dialogue">"나도 몰라요. 한 번도 본 적 없어서."</span>\n<span class="dialogue">"……그럼 같이 가자."</span>`,
+    choices: null,
+    nextNarrative: "ch6"
+  },
+  {
+    id: 6,
+    pov: "노든·치쿠 시점",
+    title: "함께 걷는 밤",
+    quote: "\"걷는다는 건 포기하지 않는다는 뜻이야.\"",
+    image: "ch6",
+    text: `황폐한 들판을 둘은 함께 걸었다. 노든의 큰 발자국 옆에 치쿠의 작은 발자국이 찍혔다.\n\n노든은 자꾸 복수를 생각했다. 치쿠는 알이 식을까봐 두려워했다.\n\n밤이 깊어지자 노든은 생각했다. 치쿠와 알이 여정을 느리게 만든다고. 혼자라면 더 빨리 갈 수 있다고.`,
+    choices: [
+      { text: "치쿠의 속도에 맞춰 걷는다. 천천히라도 함께.", next: "ch7" },
+      { text: "\"너희는 여기서 쉬어. 나 먼저 갈게.\"", next: "bad5" }
+    ]
+  },
+  {
+    id: 7,
+    pov: "치쿠 시점",
+    title: "쓰러지기 전에",
+    quote: "\"나는 알고 있었어. 내 다리가 더는 버티지 못한다는 걸.\"",
+    image: "ch7",
+    text: `치쿠의 발걸음이 점점 느려졌다. 양동이를 입에 문 채 걷는 몸이 한계에 달했다.\n\n치쿠는 알고 있었다. 자신이 바다까지 닿지 못할 것 같다는 것을.\n\n노든이 옆을 걷고 있었다. 말하면 짐이 될까. 말하지 않으면 너무 늦을 것 같았다.`,
+    choices: [
+      { text: "\"노든, 나… 더 못 걸을 것 같아. 알 부탁해.\"", next: "ch8" },
+      { text: "아무 말도 하지 않는다. 혼자 걷다가 쓰러진다.", next: "bad6" }
+    ]
+  },
+  {
+    id: 8,
+    pov: "노든 시점",
+    title: "혼자 남은 새벽",
+    quote: "\"치쿠가 없는 세상에서도 걸어야 한다면, 그건 치쿠를 위해서일 것이다.\"",
+    image: "ch8",
+    text: `치쿠는 쓰러졌다. 노든은 알을 품에 안고 치쿠의 곁에 앉았다.\n\n날이 밝아오면서 알에서 미세한 소리가 들리기 시작했다.\n\n그리고 멀리 — 밀렵꾼의 흔적이 보였다. 노든의 심장이 빠르게 뛰었다. 평생 기다려온 그 순간이었다.\n\n하지만 치쿠는 마지막 눈빛으로 알을 바라보았었다.`,
+    choices: [
+      { text: "알 곁에 머문다. 치쿠가 부탁한 것은 이것이었다.", next: "ch9" },
+      { text: "복수를 선택한다. 이것만큼은 포기할 수 없다.", next: "bad7" }
+    ]
+  },
+  {
+    id: 9,
+    pov: "아기 펭귄 '나' 시점",
+    title: "기억 조각",
+    quote: "\"나는 기억하지 못한다. 하지만 내 몸은 알고 있다 — 누군가 나를 지켜줬다는 것을.\"",
+    image: "ch9",
+    text: `알이 부화했다. 처음 보이는 세상은 어두웠고, 거대한 코뿔소가 있었다.\n\n노든이 말했다.\n\n<span class="dialogue">"네 엄마는 한쪽 눈이 없었어. 그래서 늘 오른쪽이 두려웠지. 하지만 걸음을 멈추지 않았어. 알을 입에 물고, 끝까지."</span>\n\n<span class="dialogue">"바다는 봤나요?"</span>\n\n<span class="dialogue">"……못 봤어. 하지만 여기까지 왔잖아."</span>`,
+    choices: null,
+    nextNarrative: "ch10"
+  },
+  {
+    id: 10,
+    pov: "아기 펭귄 '나' 시점",
+    title: "긴긴밤의 끝",
+    quote: "\"밤은 길었다. 하지만 끝이 있었다.\"",
+    image: "ch10",
+    text: `마침내 바다가 보이는 언덕. 노든과 '나'가 나란히 서 있었다.\n\n바람이 바다 냄새를 실어왔다. '나'는 태어나서 처음으로 그 냄새를 맡았다.\n\n노든이 말했다.\n\n<span class="dialogue">"이제 헤어질 시간이야."</span>\n\n'나'는 노든의 다리에 바짝 붙었다.\n\n<span class="dialogue">"나를 혼자 보내지 말아요."</span>\n\n노든은 천천히 몸을 낮춰 눈을 맞췄다.\n\n<span class="dialogue">"너는 이미 훌륭한 코뿔소야. 내가 가르쳐준 것들, 네 엄마가 걸어온 길, 그 모든 게 네 안에 있거든. 그러니 이제 훌륭한 펭귄이 되는 일만 남았네."</span>`,
+    choices: [
+      { text: "고개를 끄덕이고, 노든과 작별한다.", next: "good" },
+      { text: "노든 곁에 남기로 한다. 아직 혼자는 무섭다.", next: "bad8" }
+    ]
+  }
+];
+
+const ENDINGS = {
+  good: {
+    type: "good",
+    badge: "진엔딩",
+    title: "더러운 웅덩이에도 뜨는 별",
+    image: "ending_good",
+    text: `'나'는 천천히 노든에게서 몸을 뗐다. 다리가 떨렸다. 하지만 발을 뗐다.\n\n한 발자국.\n또 한 발자국.\n\n뒤를 돌아보고 싶었다. 하지만 엄마가 그랬을 것 같았다 — 한 번 걷기 시작하면 멈추지 않는다고. 양동이를 입에 물고, 끝까지.\n\n바다는 넓었다. '나'는 처음 보는 파도 앞에 한참 서 있었다. 무섭기도 하고, 아름답기도 한 것. 엄마가 그토록 오고 싶어 했던 곳.\n\n뒤를 돌아봤다. 노든은 보이지 않았다. 지평선만 있었다.\n\n하지만 이상하게도 외롭지 않았다. 등 뒤에 누군가의 시선이 닿는 것 같았다. 끝까지 바라봐주는 눈길이.\n\n'나'는 파도 속으로 한 발을 내밀었다. 차가웠다. 그리고 좋았다.\n\n긴긴밤은 끝났다.`
+  },
+  bad1: {
+    type: "bad", badge: "배드엔딩", title: "굳어버린 밤",
+    image: "ending_bad",
+    text: `노든은 그날 이후 움직이지 않는 법을 배웠다.\n분노도, 슬픔도, 발걸음도.\n\n동물원 우리 안에서 그는 조용히 늙어갔다.\n아무도 그의 이름을 부르지 않았다.`
+  },
+  bad2: {
+    type: "bad", badge: "배드엔딩", title: "의미 없는 뿔",
+    image: "ending_bad",
+    text: `앙가부는 뿔 없이 쓰러졌다.\n노든은 그것조차 보지 않았다.\n\n세상이 사라지는 건 한순간이 아니라,\n포기를 반복하는 것이라는 걸\n그는 끝내 알지 못했다.`
+  },
+  bad3: {
+    type: "bad", badge: "배드엔딩", title: "깨진 알",
+    image: "ending_bad",
+    text: `알은 차갑게 부서졌다.\n윔보가 원했던 건 치쿠가 살아남는 것이었는데.\n\n사랑한다는 말은 때로\n함께 있는 것이 아니라,\n먼저 걸어가는 것임을\n치쿠는 알면서도 믿지 못했다.`
+  },
+  bad4: {
+    type: "bad", badge: "배드엔딩", title: "혼자였던 길",
+    image: "ending_bad",
+    text: `바다는 어느 방향인지 아무도 알려주지 않았다.\n알은 끝내 부화하지 못했다.\n\n혼자서는 긴긴밤을 걸어낼 수 없다는 것을,\n치쿠는 너무 늦게 깨달았다.`
+  },
+  bad5: {
+    type: "bad", badge: "배드엔딩", title: "먼저 걸어간 발자국",
+    image: "ending_bad",
+    text: `노든은 빠르게 도착했지만,\n그곳에는 아무것도 없었다.\n\n복수할 밀렵꾼도, 기다리는 누군가도.\n혼자 도착한 바다는 그냥 차가운 물이었다.`
+  },
+  bad6: {
+    type: "bad", badge: "배드엔딩", title: "전하지 못한 말",
+    image: "ending_bad",
+    text: `치쿠는 끝내 말하지 않았다.\n부탁하는 것이 짐이 될까봐.\n\n하지만 노든은 기다리고 있었다.\n언제든 받아줄 준비가 되어 있었다.\n\n사랑은 짐이 아니라는 걸,\n치쿠는 알면서도 믿지 못했다.`
+  },
+  bad7: {
+    type: "bad", badge: "배드엔딩", title: "빈 새벽",
+    image: "ending_bad",
+    text: `노든은 밀렵꾼을 찾았다. 이긴 것 같았다.\n\n하지만 돌아왔을 때\n아기 펭귄은 이미 혼자였다.\n\n복수는 이루었지만,\n치쿠의 마지막 부탁은 지키지 못했다.\n이긴 것 같지만, 진 것이었다.`
+  },
+  bad8: {
+    type: "bad", badge: "배드엔딩", title: "동물원의 펭귄",
+    image: "ending_bad",
+    text: `우리 안은 따뜻했다.\n외롭지는 않았다.\n\n그런데 이상하게도, 어떤 날 밤에는\n알 수 없는 냄새가 코끝을 스쳤다.\n바다 냄새인지 아닌지도 모르면서,\n'나'는 그게 그리웠다.\n\n엄마가 평생 가고 싶어 했던 곳.\n'나'는 끝내 그곳이 어떤 곳인지 알지 못했다.`
+  }
+};
+
+// ══════════════════════════════════════
+// 게임 로직
+// ══════════════════════════════════════
+const chapterMap = {};
+CHAPTERS.forEach(c => { chapterMap[`ch${c.id}`] = c; });
+
+function startGame() {
+  showChapter("ch1");
+}
+
+function showChapter(id) {
+  const ch = chapterMap[id];
+  if (!ch) { showEnding(id); return; }
+
+  document.getElementById("screen-title").classList.add("hidden");
+  document.getElementById("screen-ending").classList.add("hidden");
+  document.getElementById("screen-chapter").classList.remove("hidden");
+
+  const progress = CHAPTERS.map((c, i) => {
+    const cls = c.id < ch.id ? "done" : c.id === ch.id ? "current" : "";
+    return `<div class="progress-dot ${cls}"></div>`;
+  }).join("");
+
+  const choicesHtml = ch.choices
+    ? `<div class="choices-label">— 선택 —</div>
+       <div class="choices">
+         ${ch.choices.map((c, i) => `
+           <button class="choice-btn" onclick="handleChoice('${c.next}')">
+             <span class="choice-key">${String.fromCharCode(65+i)}.</span>
+             <span>${c.text}</span>
+           </button>`).join("")}
+       </div>`
+    : `<button class="btn-next" onclick="handleChoice('${ch.nextNarrative}')">계속 →</button>`;
+
+  const textHtml = ch.text.split('\n').map(line =>
+    line.trim() ? `<p>${line}</p>` : '<p style="height:0.5rem"></p>'
+  ).join('');
+
+  document.getElementById("chapter-inner").innerHTML = `
+    <div class="progress-bar">${progress}</div>
+    <div class="chapter-header">
+      <span class="chapter-num">CHAPTER ${ch.id}</span>
+      <span class="chapter-pov">${ch.pov}</span>
+    </div>
+    <div class="chapter-image">${IMAGES[ch.image]}</div>
+    <h2 class="chapter-title">${ch.title}</h2>
+    <p class="chapter-quote">${ch.quote}</p>
+    <div class="chapter-text">${textHtml}</div>
+    ${choicesHtml}
+  `;
+
+  document.getElementById("chapter-inner").classList.remove("fade-in");
+  void document.getElementById("chapter-inner").offsetWidth;
+  document.getElementById("chapter-inner").classList.add("fade-in");
+  window.scrollTo(0, 0);
+}
+
+function handleChoice(next) {
+  if (next.startsWith("ch")) { showChapter(next); }
+  else { showEnding(next); }
+}
+
+function showEnding(id) {
+  const e = ENDINGS[id];
+  if (!e) return;
+
+  document.getElementById("screen-chapter").classList.add("hidden");
+  document.getElementById("screen-title").classList.add("hidden");
+  document.getElementById("screen-ending").classList.remove("hidden");
+
+  const textHtml = e.text.split('\n').map(line =>
+    line.trim() ? `<p>${line}</p>` : '<p style="height:0.5rem"></p>'
+  ).join('');
+
+  document.getElementById("ending-inner").innerHTML = `
+    <div class="ending-badge ${e.type}">${e.badge}</div>
+    <h2 class="ending-title ${e.type}">${e.title}</h2>
+    <div class="ending-image">${IMAGES[e.image]}</div>
+    <div class="ending-text">${textHtml}</div>
+    <div class="ending-buttons">
+      <button class="btn-retry" onclick="startGame()">처음부터 다시</button>
+      <button class="btn-home" onclick="goHome()">타이틀로</button>
+    </div>
+  `;
+
+  document.getElementById("ending-inner").classList.remove("fade-in");
+  void document.getElementById("ending-inner").offsetWidth;
+  document.getElementById("ending-inner").classList.add("fade-in");
+  window.scrollTo(0, 0);
+}
+
+function goHome() {
+  document.getElementById("screen-chapter").classList.add("hidden");
+  document.getElementById("screen-ending").classList.add("hidden");
+  document.getElementById("screen-title").classList.remove("hidden");
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>
